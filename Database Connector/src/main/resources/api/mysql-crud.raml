@@ -1,0 +1,77 @@
+#%RAML 1.0
+types:
+  employeeDataType:
+    properties:
+      eno:
+        example: 1
+        type: number
+        format: int
+      firstname:
+        example: Example
+        type: string
+      lastname:
+        example: Example
+        type: string
+      email:
+        example: Example
+        type: string
+title: MYSQL
+mediaType:
+  - application/json
+version: v1
+protocols:
+  - HTTP
+/employeepost:
+  post:
+    body:
+      application/json:
+        type: employeeDataType
+    responses:
+      "200":
+        body:
+          application/json:
+            example: Example
+            type: string
+/employees:
+  get:
+    responses:
+      "200":
+        body:
+          application/json:
+            type: employeeDataType[]
+/employeeupdate:
+  put:
+    body:
+      application/json:
+        type: employeeDataType
+    responses:
+      "200":
+        body:
+          application/json:
+            example: Example
+            type: string
+/employee/{id}:
+  get:
+    responses:
+      "200":
+        body:
+          application/json:
+            type: employeeDataType
+  uriParameters:
+    id:
+      example: 1
+      type: number
+      format: int
+/employeedel/{id}:
+  delete:
+    responses:
+      "200":
+        body:
+          application/json:
+            example: Example
+            type: string
+  uriParameters:
+    id:
+      example: 1
+      type: number
+      format: int
