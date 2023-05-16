@@ -1,0 +1,71 @@
+#%RAML 1.0
+types:
+  EmpDataTyp:
+    properties:
+      empNum:
+        example: Example
+        type: string
+      empFirstName:
+        example: Example
+        type: string
+      empLastName:
+        example: Example
+        type: string
+      empSalary:
+        example: 1
+        type: number
+        format: int
+title: MongoDB connector
+mediaType:
+  - application/json
+version: v1
+protocols:
+  - HTTP
+/employee:
+  post:
+    body:
+      application/json:
+        type: EmpDataTyp
+    responses:
+      "200":
+        body:
+          application/json:
+            example: Example
+            type: string
+/employees:
+  get:
+    responses:
+      "200":
+        body:
+          application/json:
+            type: EmpDataTyp[]
+/employeeupdate:
+  put:
+    body:
+      application/json:
+        type: EmpDataTyp
+    responses:
+      "200":
+        body:
+          application/json:
+            example: Example
+            type: string
+/employee/{id}:
+  get:
+    responses:
+      "200":
+        body:
+          application/json:
+            type: EmpDataTyp
+/employeedelete/{did}:
+  delete:
+    responses:
+      "200":
+        body:
+          application/json:
+            example: Example
+            type: string
+  uriParameters:
+    did:
+      example: Example
+      type: string
