@@ -1,0 +1,29 @@
+#%RAML 1.0
+types:
+  emailDataType:
+    properties:
+      to-address:
+        example: Example
+        type: string
+      subject:
+        example: Example
+        type: string
+      body:
+        example: Example
+        type: string
+title: SendingEMAIL
+mediaType:
+  - application/json
+protocols:
+  - HTTP
+/email:
+  post:
+    body:
+      application/json:
+        type: emailDataType
+    responses:
+      "200":
+        body:
+          application/json:
+            example: Example
+            type: string
