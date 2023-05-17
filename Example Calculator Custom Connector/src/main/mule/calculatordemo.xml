@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:calculator="http://www.mulesoft.org/schema/mule/calculator"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/calculator http://www.mulesoft.org/schema/mule/calculator/current/mule-calculator.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="008acea4-cfd6-4c54-9b61-2740d1e1eaaa" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="calculatordemoFlow" doc:id="88d0ef3a-a63c-470f-b95e-369769e2d6e5" >
+		<http:listener doc:name="Listener" doc:id="73fc2fb0-81a0-4fe1-97d0-f079a598e5a8" config-ref="HTTP_Listener_config" path="/Demo"/>
+		<calculator:calculator doc:name="Calculator" doc:id="85141e70-839c-450d-bb5f-a70b68c4872e" n1="#[payload.n1]" n2="#[payload.n2]" operator="#[payload.Operator]"/>
+		<ee:transform doc:name="Transform Message" doc:id="0e1519f2-7d69-43a2-8495-18d8f3c4ed4c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"result":payload
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
