@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="b4662a31-46ad-4800-b8c7-97ebddb1324a" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="494e1c7d-c1af-4973-be85-cc052c2d7889" >
+		<salesforce:basic-connection username="xxxx@gmail.com" password="xxx" securityToken="xxxxxn8xhjdhQ7M5WV" />
+	</salesforce:sfdc-config>
+	<salesforce:sfdc-config name="Salesforce_Config1" doc:name="Salesforce Config" doc:id="9c179d38-aefc-47b8-b3d3-5f5f279abc0e" >
+		<salesforce:basic-connection username="xxxx@gmail.com" password="xxxx" securityToken="xxxx9ywLUfcE12cEK3kxl" />
+	</salesforce:sfdc-config>
+	<flow name="casetocaseFlow" doc:id="3f823b5b-5ac3-48a2-b1da-b32957e78159" >
+		<http:listener doc:name="Listener" doc:id="f09e3e4e-6df4-406a-82ee-798dc20ba1c1" config-ref="HTTP_Listener_config" path="/case"/>
+		<salesforce:query doc:name="Query" doc:id="ffb97592-f4ac-44c0-8941-73844c260d28" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query ><![CDATA[select NNRG_Case_Id__c,NNRG_Case_Sync_Status__c from Case where NNRG_Case_Id__c != null]]></salesforce:salesforce-query>
+		</salesforce:query>
+		<ee:transform doc:name="Transform Message" doc:id="3dd1c14b-7244-4ffd-8f5f-9e90b22e7a97" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload map(p,index)->
+{
+	Id: p.NNRG_Case_Id__c,
+	
+	Status: p.NNRG_Case_Sync_Status__c
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:update type="Case" doc:name="Update" doc:id="4234df54-eea9-415b-83b1-ee64fb4dc968" config-ref="Salesforce_Config1"/>
+		<ee:transform doc:name="Transform Message" doc:id="cc184952-6036-4194-bdb9-339a629cf0cd" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload.successful]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
