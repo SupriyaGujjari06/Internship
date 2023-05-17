@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="120cda61-9c26-4975-933a-06df96c965d4" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="32e1d008-c3b2-4e57-bc6c-eec2c1ccc250" >
+		<salesforce:basic-connection username="xxxxx@gmail.com" password="xxxxx" securityToken="xxxxx" />
+	</salesforce:sfdc-config>
+	<flow name="salesforceplatformFlow" doc:id="ef841f66-4a9a-4023-bca4-e1d832011d66" >
+		<http:listener doc:name="Listener" doc:id="20981a4e-5f48-481a-b008-7f5f1ea6c594" config-ref="HTTP_Listener_config" path="/publish"/>
+		<salesforce:publish-platform-event-message platformEventName="contact_event__e" doc:name="Publish platform event message" doc:id="7fd09dbe-6b10-46bf-ae57-14e8af81021c" config-ref="Salesforce_Config">
+			<salesforce:platform-event-messages ><![CDATA[#[[payload]]]]></salesforce:platform-event-messages>
+		</salesforce:publish-platform-event-message>
+		<ee:transform doc:name="Transform Message" doc:id="9b31e89a-0511-4b33-9a5b-4b69f69c2ff6" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload.success
+	
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
