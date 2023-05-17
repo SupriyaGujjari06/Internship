@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:google-sheets="http://www.mulesoft.org/schema/mule/google-sheets" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/google-sheets http://www.mulesoft.org/schema/mule/google-sheets/current/mule-google-sheets.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="9902d384-cfec-45dc-9169-65ecd24e7063" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<google-sheets:config name="Google_Sheets_Config" doc:name="Google Sheets Config" doc:id="01b05548-297a-46e0-acaf-d5a1d2819b96" >
+		<google-sheets:oauth-2-0-connection >
+			<google-sheets:oauth-authorization-code consumerKey="232861452625-6fspjo4mspa0qfr4s3bp4hr9jqd8pva5.apps.googleusercontent.com" consumerSecret="xxxxxxx" />
+			<google-sheets:oauth-callback-config listenerConfig="HTTP_Listener_config" callbackPath="/oauth2callback" authorizePath="/authorize" externalCallbackUrl="http://localhost:8081/oauth2callback" />
+		</google-sheets:oauth-2-0-connection>
+	</google-sheets:config>
+	<flow name="gettingspreadsheetdetailsFlow" doc:id="d2c7d2af-a2c4-4d32-bc61-41ca82c2ad40" >
+		<http:listener doc:name="Listener" doc:id="fafee6a2-6e17-4148-8f79-7fda933b49ba" path="/insert" config-ref="HTTP_Listener_config"/>
+		<google-sheets:create-spreadsheets-values-rangeappend-by-spreadsheet-id doc:name="Append Spreadsheets Values" doc:id="419212a6-3530-412b-8d3e-0d27e04d3b53" config-ref="Google_Sheets_Config" spreadsheetId="1e0wFVoC2aRPiCHTvbMzwUJzV7rqp1b4qE9uNxb2OkFg" range="A2,B2" insertDataOption="INSERT_ROWS"/>
+	</flow>
+</mule>
