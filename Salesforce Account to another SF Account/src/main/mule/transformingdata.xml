@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:email="http://www.mulesoft.org/schema/mule/email"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="b10ed291-1793-4b90-bfb8-1c87bf358fa6" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="73ed16a3-eb9e-4b5b-a2ee-dbc7359b41fc" >
+		<salesforce:basic-connection username="xxxx" password="xxx" securityToken="xxx" />
+	</salesforce:sfdc-config>
+	<salesforce:sfdc-config name="Salesforce_Config1" doc:name="Salesforce Config" doc:id="d50d9796-6166-4a2b-9ad9-4d46faa40f38" >
+		<salesforce:basic-connection username="xxxxx" password="xxxx" securityToken="xxxx" />
+	</salesforce:sfdc-config>
+	<email:smtp-config name="Email_SMTP" doc:name="Email SMTP" doc:id="c67d3c41-5a19-4e43-917e-b6f92012034a" >
+		<email:smtps-connection host="smtp.hostinger.com" user="xxxx password="xxx" >
+			<tls:context >
+				<tls:trust-store insecure="true" />
+			</tls:context>
+		</email:smtps-connection>
+	</email:smtp-config>
+	<flow name="transformingdataFlow1" doc:id="58f2db8b-c633-4efd-8b85-59b31f20eb48" >
+		<http:listener doc:name="Listener" doc:id="676a1790-b6ec-440a-a3ab-d413f07cd659" config-ref="HTTP_Listener_config" path="/transform"/>
+		<try doc:name="Try" doc:id="051fbd6a-53b7-4828-9cba-219fdb14098b" >
+			<salesforce:query doc:name="Query" doc:id="daccb048-5f23-4c49-b73a-3d4422232c3e" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query><![CDATA[select AccountId,NNRG_Account_ID__c,EAIESB_Primary_Employer_Id__c from Case where NNRG_Account_ID__c != null]]></salesforce:salesforce-query>
+		</salesforce:query>
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="577261b3-1bc3-4d35-a8a9-8d8cc32ea0b1" type="ANY">
+					<email:send doc:name="Send" doc:id="e2c3aed1-330a-4f59-8983-14fd61fa7c94" config-ref="Email_SMTP" fromAddress="xxxx" subject="Error occured int the flow">
+						<email:to-addresses >
+							<email:to-address value="xxxx" />
+						</email:to-addresses>
+						<email:body >
+							<email:content ><![CDATA[#[%dw 2.0
+output application/json
+---
+error]]]></email:content>
+						</email:body>
+					</email:send>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+		<ee:transform doc:name="Transform Message" doc:id="433e6f9f-8b4e-42a0-a0be-a7b1ccc119f2">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload map(p,index)->
+{
+	Id: p.NNRG_Account_ID__c,
+	EAIESB_Account_Id__c: p.AccountId,
+	
+	
+	EAIESB_Employer_Id__c: p.EAIESB_Primary_Employer_Id__c 
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:update type="Account" doc:name="Update" doc:id="c1385eb7-678e-4b86-b5bb-30820684f65e" config-ref="Salesforce_Config1">
+			</salesforce:update>
+		<ee:transform doc:name="Transform Message" doc:id="4b45c2ca-fe40-4387-b5aa-a7b0e0e12e03">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload.successful]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
