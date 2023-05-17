@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="21edbd0e-1e21-4da9-b07d-2c68336fdcaa" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="conversionFlow" doc:id="2db91789-e98e-4cd4-a5bf-d1187d5206c2" >
+		<http:listener doc:name="Listener" doc:id="4ea93cae-535e-42c8-9b6d-0c5e62e28c43" config-ref="HTTP_Listener_config" path="/conversion"/>
+		<ee:transform doc:name="Transform Message" doc:id="056bca02-d49e-4a13-8540-c7c6ffdacdbc" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+input payload json
+output csv header=true
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<file:write doc:name="Write" doc:id="1a52eac4-4372-469a-8e98-390fd783be03" path="C:\Users\supri\OneDrive\Documents\Desktop\conversion\converted.txt" mode="APPEND"/>
+		<ee:transform doc:name="Transform Message" doc:id="573eaf1e-41dc-4c3c-ae00-a37ae525808e" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+input payload csv
+output json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<file:write doc:name="Write" doc:id="ac056927-a095-4b03-8cdd-1e433caf769f" path="C:\Users\supri\OneDrive\Documents\Desktop\conversion\converted.txt" mode="APPEND"/>
+		<ee:transform doc:name="Transform Message" doc:id="9b0ce7c5-95f7-4050-8b4a-cf3823a38b6d">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+
+output application/xml
+---
+student:
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<file:write doc:name="Write" doc:id="6073500f-aeb7-434a-974c-a5381ddd3ae3" path="C:\Users\supri\OneDrive\Documents\Desktop\conversion\converted.txt" mode="APPEND"/>
+	</flow>
+	<flow name="conversionFlow1" doc:id="9b6835fd-c1b8-4fd3-80f5-7886912698e8" >
+		<http:listener doc:name="Listener" doc:id="90512b79-ce6c-4d7c-a475-7d4f2c302cd2" config-ref="HTTP_Listener_config" path="/convertjsontoxml"/>
+		<ee:transform doc:name="Transform Message" doc:id="4e24557a-40f4-490a-a739-b2bb7f514d64">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+
+output application/xml
+---
+student:
+roll:
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<file:write doc:name="Write" doc:id="25aa3561-c100-468c-861f-450e56568f2b" path="C:\Users\supri\OneDrive\Documents\Desktop\conversion\converted.txt" mode="APPEND" />
+	</flow>
+	<flow name="conversionFlow2" doc:id="e3dcf10a-8454-4b1e-a7e9-cae28881e6f1" >
+		<http:listener doc:name="Listener" doc:id="95ab339e-8d2d-4731-82a1-d767bd9ed728" config-ref="HTTP_Listener_config" path="/conn"/>
+		<ee:transform doc:name="Transform Message" doc:id="0ebdd81f-a232-4e31-850d-b2cc9f3c645d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+
+output application/csv separator=","
+---
+payload.student.*roll map {
+
+Name : $.Name,
+
+class : $.class
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<file:write doc:name="Write" doc:id="3c11a715-f689-4083-9b89-e3ba994f04b6" path="C:\Users\supri\OneDrive\Documents\Desktop\conversion\converted.txt" mode="APPEND"/>
+	</flow>
+	<flow name="conversionFlow3" doc:id="dd18768a-a68f-47ac-8b93-77b5b6b5cf85" >
+		<http:listener doc:name="Listener" doc:id="061f2a52-f509-4176-80df-06b8ef9c348f" config-ref="HTTP_Listener_config" path="/convert"/>
+		<ee:transform doc:name="Transform Message" doc:id="83c8da66-6f68-47d5-a8c3-c0be8e62cbdf" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+input payload json
+output csv header=true
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="conversionFlow4" doc:id="ca3c8423-3ee8-4a50-ae72-40980ce1b30c" >
+		<http:listener doc:name="Listener" doc:id="312f54c9-5318-45fa-85f8-34e196fa8dc2" config-ref="HTTP_Listener_config" path="/verify"/>
+		<ee:transform doc:name="Transform Message" doc:id="74caa813-a7ce-4b9e-838b-2500a1f91e00" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
