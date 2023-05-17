@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:google-sheets="http://www.mulesoft.org/schema/mule/google-sheets" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/google-sheets http://www.mulesoft.org/schema/mule/google-sheets/current/mule-google-sheets.xsd">
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="e9d2e1fd-60db-4329-833e-7491a3453d66" >
+		<salesforce:basic-connection username="xxxx password="xxxx" securityToken="xxxx" />
+	</salesforce:sfdc-config>
+	<flow name="responseFlow" doc:id="b918467c-2f8f-4ce7-9702-947eefd489c6" >
+		<salesforce:subscribe-channel-listener streamingChannel="/event/platform_event_to_check__e" doc:name="Subscribe channel listener" doc:id="9228950f-9340-4bc1-981d-ab2d11673b79" config-ref="Salesforce_Config"/>
+		<logger level="INFO" doc:name="Logger" doc:id="0f60ad17-5889-4bc8-a8ce-1545486bd133" message="#[%dw 2.0&#10;output application/json&#10;---&#10;payload]"/>
+		<ee:transform doc:name="Transform Message" doc:id="06147b9d-b815-44d3-b90c-2cf0e38cc91c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
