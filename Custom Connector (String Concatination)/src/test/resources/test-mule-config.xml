@@ -1,0 +1,19 @@
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:concatstring="http://www.mulesoft.org/schema/mule/concatstring"
+      xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+          http://www.mulesoft.org/schema/mule/concatstring http://www.mulesoft.org/schema/mule/concatstring/current/mule-concatstring.xsd">
+
+    <concatstring:config name="config" configId="configId">
+        <concatstring:connection requiredParameter="aValue" />
+    </concatstring:config>
+
+    <flow name="sayHiFlow">
+        <concatstring:say-hi person="Mariano Gonzalez"/>
+    </flow>
+
+    <flow name="retrieveInfoFlow">
+        <concatstring:retrieve-info config-ref="config"/>
+    </flow>
+
+</mule>
