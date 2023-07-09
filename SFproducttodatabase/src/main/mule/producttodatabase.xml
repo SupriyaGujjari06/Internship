@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:mongo="http://www.mulesoft.org/schema/mule/mongo"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/mongo http://www.mulesoft.org/schema/mule/mongo/current/mule-mongo.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="1369c105-e992-45a3-84ed-1371cc8edf9c" >
+		<http:listener-connection host="0.0.0.0" port="8082" />
+	</http:listener-config>
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="ae45d3a5-ab89-4c7b-a651-c021b3f43ade" >
+		<salesforce:basic-connection username="xxxxx" password="xxxx" securityToken="xxxxxx" />
+	</salesforce:sfdc-config>
+	<mongo:config name="MongoDB_Config" doc:name="MongoDB Config" doc:id="ba7ae01c-9729-4e2a-82dc-665380d6227a" >
+		<mongo:connection-string-connection connectionString="mongodb+srv://xxx:xxx@cluster0.gsrxovv.mongodb.net/SF" />
+	</mongo:config>
+	<salesforce:sfdc-config name="Salesforce_Config1" doc:name="Salesforce Config" doc:id="182fb9b4-2a07-42b2-ab27-fb6c263a0a75" >
+		<salesforce:basic-connection username="xxxxx" password="xxxx" securityToken="xxxxx" />
+	</salesforce:sfdc-config>
+	<flow name="producttodatabaseFlow" doc:id="588237e1-74b9-40f3-83a9-ad0a29c6fbee" >
+		<http:listener doc:name="Listener" doc:id="c3778e5e-464d-49c7-9d65-127795c96bce" config-ref="HTTP_Listener_config" path="/test">
+			<http:error-response >
+				<http:body ><![CDATA[#[output application/json --- error.childErrors]]]></http:body>
+			</http:error-response>
+		</http:listener>
+		<salesforce:query doc:name="Query" doc:id="82a730ce-8004-4237-944e-a3abd723596c" config-ref="Salesforce_Config1">
+			<salesforce:salesforce-query ><![CDATA[select Name,ProductCode,Description,Mongodb_id__c from Product2 ]]></salesforce:salesforce-query>
+		</salesforce:query>
+		<ee:transform doc:name="Transform Message" doc:id="0445abc8-fbbd-4559-a920-6b4b1f94891a">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload map(p,index)->
+{
+	"Name":p.Name,
+	"Description":p.Description,
+	"ProductCode":p.ProductCode,
+	"Mongodb_id__c":p.Mongodb_id__c
+}
+]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="msg"><![CDATA[%dw 2.0
+output application/java
+---
+[payload]]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<choice doc:name="Choice" doc:id="46b9e3f1-4333-4802-b327-d385a68f0545" >
+			<when expression="#[payload.Mongodb_id__c != null]">
+				<ee:transform doc:name="Transform Message" doc:id="36d48f90-d077-4a90-882f-a6bbac14b00c">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise>
+				<mongo:insert-documents doc:name="Insert documents" doc:id="ad6f3a1f-360e-4863-9f12-430f6d20d630" config-ref="MongoDB_Config" collectionName="product">
+				</mongo:insert-documents>
+				<ee:transform doc:name="Transform Message" doc:id="22e755fa-e2e9-4fda-8f3b-fc9b381b3fa6">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+id:payload.items..payload.."_id"]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</otherwise>
+		</choice>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="16eae33d-df6e-4770-93ce-8552094e0ca8" type="ANY">
+				<ee:transform doc:name="Transform Message" doc:id="b98d0448-8450-433b-b6e4-c37495418380" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+error.childErrors]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>
