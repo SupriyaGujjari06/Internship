@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:kafka="http://www.mulesoft.org/schema/mule/kafka"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/kafka http://www.mulesoft.org/schema/mule/kafka/current/mule-kafka.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="adcbf2e8-7e92-40a0-9ec2-377533d58309" >
+		<http:listener-connection host="0.0.0.0" port="8083" />
+	</http:listener-config>
+	<kafka:producer-config name="Apache_Kafka_Producer_configuration" doc:name="Apache Kafka Producer configuration" doc:id="3bfb629f-9378-42d3-a937-5488cd54d901">
+		<kafka:producer-plaintext-connection >
+			<kafka:bootstrap-servers >
+				<kafka:bootstrap-server value="localhost:9092" />
+			</kafka:bootstrap-servers>
+		</kafka:producer-plaintext-connection>
+	</kafka:producer-config>
+	<kafka:consumer-config name="Apache_Kafka_Consumer_configuration" doc:name="Apache Kafka Consumer configuration" doc:id="d89b9e8f-b27b-4714-b676-fdc2183639e7" >
+		<kafka:consumer-plaintext-connection >
+			<kafka:bootstrap-servers >
+				<kafka:bootstrap-server value="localhost:9092" />
+			</kafka:bootstrap-servers>
+			<kafka:topic-patterns >
+				<kafka:topic-pattern value="eaiesb" />
+			</kafka:topic-patterns>
+		</kafka:consumer-plaintext-connection>
+	</kafka:consumer-config>
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="c4965ac0-f4e6-4427-95e8-f6397eb073df" >
+		<salesforce:basic-connection username="xxxx" password="xxxx" securityToken="xxxx" />
+	</salesforce:sfdc-config>
+	<flow name="kafkaFlow2" doc:id="fc4d5644-91d3-4a1d-8b92-09bd081074d5" >
+		<http:listener doc:name="Listener" doc:id="eef2aeda-bce3-47ef-a258-90ab0f6870e3" config-ref="HTTP_Listener_config" path="/kafkasf"/>
+		<salesforce:query doc:name="Query" doc:id="368b0d06-702f-4abe-82b6-719fdcd598ea" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query ><![CDATA[select Name,Id,Phone from Account limit 3]]></salesforce:salesforce-query>
+		</salesforce:query>
+		<ee:transform doc:name="Transform Message" doc:id="62ed2c03-8da0-475a-aaa6-5387c2998e43">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<kafka:publish doc:name="Publish" doc:id="29b6f809-3c9d-42a8-806a-c1cab92de28f" config-ref="Apache_Kafka_Producer_configuration">
+		</kafka:publish>
+		<ee:transform doc:name="Transform Message" doc:id="e035d361-fdf4-4aff-abc4-1ac75ac2f2b5">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="kafkaFlow" doc:id="281a51c9-0b5f-404f-9e16-d197ea27b74e" >
+		<http:listener doc:name="Listener" doc:id="b1acb405-ef6c-40b3-943e-c12b7bcf9aeb" config-ref="HTTP_Listener_config" path="/sfconsume"/>
+		<kafka:consume doc:name="Consume" doc:id="8bc0b1bf-06b0-48e6-9547-de961f14089e" config-ref="Apache_Kafka_Consumer_configuration"/>
+		<ee:transform doc:name="Transform Message" doc:id="c1690f0f-8280-4129-be09-7a6f93230ff6" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
