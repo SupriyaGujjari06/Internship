@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="1344b7ac-be13-439c-b898-830bb9c18cfa" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="d5bd5c40-2f9d-447d-bd46-abffa8c0966c" >
+		<salesforce:basic-connection username="xxx" password="xxx" securityToken="xxxx" />
+	</salesforce:sfdc-config>
+	<flow name="exampleFlow" doc:id="7beb5b3d-b74f-4628-b3f4-67df81d715b2" >
+		<http:listener doc:name="Listener" doc:id="fa16af55-e647-4737-9965-d0979202db51" config-ref="HTTP_Listener_config" path="/exam"/>
+		<ee:transform doc:name="Transform Message" doc:id="dad4e0de-1910-46b2-8440-d3c35618008e" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+"emp":lookup("emp",payload.Id,100000)]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="emp" doc:id="eeaef10b-0e96-4ef1-96de-1e3677aaed7c" initialState="started">
+		<salesforce:query doc:id="e61099b6-aa3c-4e3e-8aa0-7fe18f93c782" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query ><![CDATA[select 	Name,employee_id__c,first_name__c,salary__c,department_id__r.department_id__c,job_id__r.job_id__c,department_id__c,job_id__c,Id from employee__c where Id=':id']]></salesforce:salesforce-query>
+			<salesforce:parameters ><![CDATA[#[id:payload]]]></salesforce:parameters>
+		</salesforce:query>
+		<ee:transform doc:name="Transform Message" doc:id="afcdde09-0c75-48db-9865-405f42b8b31b" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map(payload1,idx)->
+{
+"Department":payload1.department_id__r.department_id__c[0],
+"Employee":payload1.Name,
+"Job_id":payload1.job_id__r.job_id__c[0],
+"Manager_Id":payload1.Manager_Id__c,
+"id":payload1.Id,
+"emp id":payload1.employee_id__c,
+"department":lookup("dep",payload1.department_id__c,70000),
+ "job":lookup("job",payload1.job_id__c,50000),
+"jobhistory":lookup("jobhry",payload1.Id,30000)
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="dep" doc:id="6b8747f1-dca1-43c2-b88d-ec445b31e8d3" initialState="started">
+		<salesforce:query doc:name="Query" doc:id="c157ff06-ec5c-4fec-a35b-db88e82fe7de" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query ><![CDATA[select 	department_id__c,	department_name__c,	location_id__c,	manger_id__c from department__c where Id=':id']]></salesforce:salesforce-query>
+			<salesforce:parameters ><![CDATA[#[id:payload]]]></salesforce:parameters>
+		</salesforce:query>
+		<ee:transform doc:name="Transform Message" doc:id="c7f965bd-e1bf-4899-9385-ee4264be4219" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map(payload1,idx)->
+{
+"Department_id":payload1.department_id__c,
+"department_name__c":payload1.department_name__c,
+"location_id__c":lookup("loc",payload1.location_id__c,70000),
+"manger_id__c":payload1.manger_id__c,
+"id":payload1.Id
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="job" doc:id="7927a05a-701a-48c9-846d-ed0add45cae7" initialState="started">
+		<salesforce:query doc:name="Query" doc:id="ea0a5767-ae11-46fb-9d1c-4d72ebb391a5" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query><![CDATA[select 	job_title__c,job_id__c,max_salary__c,min_salary__c,Id from job__c  where Id=':id']]></salesforce:salesforce-query>
+			<salesforce:parameters><![CDATA[#[id:payload]]]></salesforce:parameters>
+		</salesforce:query>
+		<ee:transform doc:name="Transform Message" doc:id="25c2d30f-07ac-401b-8664-b7e34544355e">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"job id":payload.job_id__c[0],
+	"title":payload.job_title__c[0],
+	"max salary":payload.max_salary__c[0],
+	"min salary":payload.min_salary__c[0]
+	
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="jobhry" doc:id="d0eda11c-04af-4e52-ba0b-1b50724fc9bd" initialState="started">
+		<salesforce:query doc:name="Query" doc:id="1bab0975-b837-4387-9a6a-2406e45c0035" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query><![CDATA[select 	start_date__c,end_date__c,Department_ID__c,employee_id__c from job_history__c  where employee_id__c=':id']]></salesforce:salesforce-query>
+			<salesforce:parameters><![CDATA[#[id:payload]]]></salesforce:parameters>
+		</salesforce:query>
+		<ee:transform doc:name="Transform Message" doc:id="35c69e2c-aefd-4501-9b77-92938116edb6">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"start date":payload.start_date__c[0],
+	"end date":payload.start_date__c[0],
+	"department id":payload.department_id__c[0]
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="loc" doc:id="bdde8b0e-da70-4277-9210-a6a10f108c96" initialState="started">
+		<salesforce:query doc:name="Query" doc:id="ea24ec0d-1b0a-47e4-8e84-76a9c18fe967" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query ><![CDATA[select 	country_id__c,	location_id__c,	postal_code__c,	city__c from location__c where Id=':id']]></salesforce:salesforce-query>
+			<salesforce:parameters ><![CDATA[#[id:payload]]]></salesforce:parameters>
+		</salesforce:query>
+		<ee:transform doc:name="Transform Message" doc:id="98e3de0f-a997-4163-bbfe-6f5a1d97c768" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[output application/json
+---
+payload map(payload1,idx)->
+{
+"city":payload1.city__c,
+"location id":payload1.location_id__c,
+"country":lookup("country",payload1.country_id__c,70000),
+"postal":payload1.postal_code__c,
+"id":payload1.Id
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="country" doc:id="c9e0cf92-6806-4380-a687-6b9a228bb209" initialState="started">
+		<salesforce:query doc:name="Query" doc:id="fc838701-2ed2-4dae-b256-3b99d832b0c4" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query ><![CDATA[select 	country_name__c,region_id__c,country_id__c from country__c where Id=':id']]></salesforce:salesforce-query>
+			<salesforce:parameters ><![CDATA[#[id:payload]]]></salesforce:parameters>
+		</salesforce:query>
+		<ee:transform doc:name="Transform Message" doc:id="db58d667-8c9f-48dc-a05a-31c7f1a1d5f7" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map(payload1,idx)->
+{
+"country name":payload1.country_name__c,
+"country id":payload1.country_id__c,
+"region_id__c":lookup("region",payload1.region_id__c,70000)
+
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="region" doc:id="8fbf4b80-4586-48a3-ac8d-b3f7af0dd7e4" initialState="started">
+		<salesforce:query doc:name="Query" doc:id="956a8466-167d-4aae-b3c2-f232230effbf" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query ><![CDATA[select 	region_name__c,regionid__c from 	region__c where Id=':id']]></salesforce:salesforce-query>
+			<salesforce:parameters ><![CDATA[#[id:payload]]]></salesforce:parameters>
+		</salesforce:query>
+		<ee:transform doc:name="Transform Message" doc:id="bef94682-ecd6-4fe0-af2d-e7f5702f9552" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"region id":payload.regionid__c[0],
+	"region name":payload.region_name__c[0]
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
