@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:jms="http://www.mulesoft.org/schema/mule/jms"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="07808c62-3fa2-4203-a2c9-252e91c735b5" >
+		<http:listener-connection host="0.0.0.0" port="8081"/>
+	</http:listener-config>
+	<jms:config name="JMS_Config" doc:name="JMS Config" doc:id="fa4edb27-43fa-477d-8e0b-109a6a24178c" >
+		<jms:active-mq-connection username="admin" password="adminxxx" >
+			<jms:factory-configuration brokerUrl=" tcp://localhost:61616" />
+		</jms:active-mq-connection>
+	</jms:config>
+	<flow name="jmsFlow" doc:id="7efcd39c-391f-471c-ac98-1430d6becaf7" >
+		<http:listener doc:name="Listener" doc:id="cb0a9015-5e70-4f0f-9d2a-f5ce53152c60" config-ref="HTTP_Listener_config" path="/jms"/>
+		<jms:consume doc:name="Consume" doc:id="8c42629c-4bac-4c94-aae7-8cf73f69078b" config-ref="JMS_Config" destination="supriya"/>
+		<ee:transform doc:name="Transform Message" doc:id="671316ad-6ed5-490a-8577-f0a9459c2faf">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="jmsFlow1" doc:id="afdc923e-140e-4514-883b-62f14a3796b5" >
+		<http:listener doc:name="Listener" doc:id="ad0c66c9-b160-41a8-842e-bb04fe428bc1" config-ref="HTTP_Listener_config" path="/publish"/>
+		<jms:publish doc:name="Publish" doc:id="d4ad7d13-dea2-43e9-8aef-c559d8f4d7ed" config-ref="JMS_Config" destination="supriya"/>
+	</flow>
+</mule>
