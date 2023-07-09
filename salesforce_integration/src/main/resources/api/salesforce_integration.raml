@@ -1,0 +1,68 @@
+#%RAML 1.0
+types:
+  AccountDataType:
+    properties:
+      Name:
+        example: Example
+        type: string
+      Phone:
+        example: Example
+        type: string
+title: salesforceintegration
+mediaType:
+  - application/json
+version: v1
+protocols:
+  - HTTP
+/account:
+  post:
+    body:
+      application/json:
+        type: AccountDataType
+    responses:
+      "200":
+        body:
+          application/json:
+            type: AccountDataType
+/accounts:
+  get:
+    responses:
+      "200":
+        body:
+          application/json:
+            type: AccountDataType[]
+/account/{id}:
+  get:
+    responses:
+      "200":
+        body:
+          application/json:
+            type: AccountDataType
+  uriParameters:
+    id:
+      example: Example
+      type: string
+/account/delete/{id}:
+  delete:
+    responses:
+      "200":
+        body:
+          application/json:
+            type: string
+        
+  uriParameters:
+    id:
+      example: Example
+      type: string
+/account/update/{id}:
+  put:
+    responses:
+      "200":
+        body:
+          application/json:
+            type: AccountDataType
+        
+  uriParameters:
+    id:
+      example: Example
+      type: string
