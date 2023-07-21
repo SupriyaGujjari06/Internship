@@ -1,0 +1,20 @@
+%dw 2.0
+
+type auto_9c18ad73_e2d6_4887_96b0_f575da395a9c_Output_Variables_sourcedata = Array<Array<Document>>
+type Document = {|
+  "_id"?: {|  |}, 
+  int_id?: String, 
+  source_type?: String, 
+  sourcebucketname?: String, 
+  sourceobjectkey?: String, 
+  sourceaccesskey?: String, 
+  sourcesecretkey?: String, 
+  target_type?: String, 
+  targetaccesskey?: String, 
+  targetsecretkey?: String, 
+  targetbucketname?: String, 
+  targetobjectkey?: String
+|} {"typeId": "Document"}
+
+
+

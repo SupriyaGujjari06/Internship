@@ -1,0 +1,16 @@
+%dw 2.0
+
+type auto_9c18ad73_e2d6_4887_96b0_f575da395a9c_Input_Attributes = Null | {|
+  lastModifiedTime?: DateTime {"typeId": "java.time.LocalDateTime"}, 
+  lastAccessTime?: DateTime {"typeId": "java.time.LocalDateTime"}, 
+  timestamp?: DateTime {"typeId": "java.time.LocalDateTime"}, 
+  size: Number, 
+  symbolicLink?: Boolean {"typeId": "boolean"}, 
+  fileName: String, 
+  creationTime?: DateTime {"typeId": "java.time.LocalDateTime"}, 
+  directory?: Boolean {"typeId": "boolean"}, 
+  regularFile?: Boolean {"typeId": "boolean"}, 
+  name?: String, 
+  path: String
+|}
+
