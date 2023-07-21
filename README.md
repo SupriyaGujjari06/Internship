@@ -19,10 +19,10 @@ S.No	Tasks<br />
 17	Adding Child Error to MuleAppInsights.<br /> 											
 18	Scatter – Gather Component<br /> 											
 19	API Manger and policies in AnyPoint Platform <br /> 											
-	   <space>  1	Basic Authentication - Simple <br /> 										
-	<space> 2	Client ID Enforcement<br /> 										
-	     3	Rate Limiting<br /> 										
-	     4	Rate Limiting – SLA Based <br /> 										
+	   &nbsp; 1	Basic Authentication - Simple <br /> 										
+	&nbsp; 2	Client ID Enforcement<br /> 										
+	 &nbsp;    3	Rate Limiting<br /> 										
+	     &nbsp;4	Rate Limiting – SLA Based <br /> 										
 	     5	IP Blocklist<br /> 										
 	     6	JSON Threat Protection<br /> 										
 20	"MuleApp Insights Custom Connector - Audit Log,Error Log"<br /> 										
