@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:mongo="http://www.mulesoft.org/schema/mule/mongo" xmlns:s3="http://www.mulesoft.org/schema/mule/s3"
+	xmlns:ftp="http://www.mulesoft.org/schema/mule/ftp"
+	xmlns:java="http://www.mulesoft.org/schema/mule/java" xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:kafka="http://www.mulesoft.org/schema/mule/kafka" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/kafka http://www.mulesoft.org/schema/mule/kafka/current/mule-kafka.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd
+http://www.mulesoft.org/schema/mule/ftp http://www.mulesoft.org/schema/mule/ftp/current/mule-ftp.xsd
+http://www.mulesoft.org/schema/mule/s3 http://www.mulesoft.org/schema/mule/s3/current/mule-s3.xsd
+http://www.mulesoft.org/schema/mule/mongo http://www.mulesoft.org/schema/mule/mongo/current/mule-mongo.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="2d78388c-5707-4cae-94e1-c6bf76c10ab7" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<kafka:producer-config name="Apache_Kafka_Producer_configuration" doc:name="Apache Kafka Producer configuration" doc:id="3f636476-bbe2-48da-8d06-5b429ee6310a" topic="transfer" >
+		<kafka:producer-plaintext-connection >
+			<kafka:bootstrap-servers >
+				<kafka:bootstrap-server value="localhost:9092" />
+			</kafka:bootstrap-servers>
+		</kafka:producer-plaintext-connection>
+	</kafka:producer-config>
+	<kafka:consumer-config name="Apache_Kafka_Consumer_configuration" doc:name="Apache Kafka Consumer configuration" doc:id="befe140a-c07b-4d66-b1fc-a719e23bdf8a" >
+		<kafka:consumer-plaintext-connection >
+			<kafka:bootstrap-servers >
+				<kafka:bootstrap-server value="localhost:9092" />
+			</kafka:bootstrap-servers>
+			<kafka:topic-patterns >
+				<kafka:topic-pattern value="final" />
+			</kafka:topic-patterns>
+		</kafka:consumer-plaintext-connection>
+	</kafka:consumer-config>
+	<file:config name="File_Config" doc:name="File Config" doc:id="c7e9a1bc-2966-4b35-8d6f-a0474e55672b" />
+	<ftp:config name="FTP_Config" doc:name="FTP Config" doc:id="e065a85f-2a25-4d03-b8de-a9472124ff93" >
+		<ftp:connection host="xx" username="xxx" password="xxxxxxxx"/>
+	</ftp:config>
+	<s3:config name="Amazon_S3_Configuration" doc:name="Amazon S3 Configuration" doc:id="a73bf827-e9c4-41c9-b627-3a17c1f83684" >
+		<s3:connection accessKey="xxxxxx" secretKey="xxxxxxxxxxx"/>
+	</s3:config>
+	<mongo:config name="MongoDB_Config" doc:name="MongoDB Config" doc:id="6d7aad8c-22d5-4748-a121-765cd96074b7" >
+		<mongo:connection-string-connection connectionString="xxxxxxxxxxxxx" />
+	</mongo:config>
+	<flow name="kafkakeyFlow" doc:id="9c18ad73-e2d6-4887-96b0-f575da395a9c" >
+		<http:listener doc:name="Listener" doc:id="a05cbb10-eab4-4af4-b816-2b4514bb3fc6" config-ref="HTTP_Listener_config" path="/kf/{key}"/>
+		<ee:transform doc:name="Transform Message" doc:id="b8dd73e0-dea3-4ab4-8e0b-237efe2a4299" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+  
+  "payload":payload.payload
+
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<kafka:publish doc:name="Publish" doc:id="5c8d4096-36ac-498f-9103-a663e4c95439" config-ref="Apache_Kafka_Producer_configuration" topic="final" key="#[attributes.uriParams.'key']">
+			<kafka:message ><![CDATA[#[payload.payload]]]></kafka:message>
+		</kafka:publish>
+		<ee:transform doc:name="Transform Message" doc:id="19791b47-2332-480f-805c-448fabe989d5" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="kafkakeyFlow1" doc:id="81a59eff-9c70-46d3-81b6-021727946f27" >
+		<kafka:message-listener doc:name="Message listener" doc:id="03003402-3d28-4799-b304-ea30a91abbd9" config-ref="Apache_Kafka_Consumer_configuration"/>
+		<ee:transform doc:name="Transform Message" doc:id="24f8af38-f325-4b18-a781-ada8015cd5cf" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload
+]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="keyval" ><![CDATA[k:attributes.key as String]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<choice doc:name="Choice" doc:id="ab374a8f-7108-4647-8b19-3b576737c121">
+			<when expression='#[vars.keyval.k== "file"]'>
+				<file:write doc:name="Write" doc:id="b5f4220a-0895-42fa-81ba-f9addf4a4766" path="xxxxxxxx" mode="APPEND">
+
+		</file:write>
+			</when>
+			<when expression='#[vars.keyval.k == "aws"]'>
+				<s3:put-object doc:name="Put Object" doc:id="fc179701-edb4-42d4-aa6d-fae41bcc62c5" config-ref="Amazon_S3_Configuration" bucketName="nnrg" key="Supriya/convertion.txt" />
+			</when>
+			<otherwise>
+				<ftp:write doc:name="Write" doc:id="ac62d378-be8b-42d6-918c-875221a8e533" config-ref="FTP_Config" path="xxxxxxx">
+				</ftp:write>
+			
+</otherwise>
+		</choice>
+	</flow>
+</mule>
