@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:mule-zuora-connector="http://www.mulesoft.org/schema/mule/mule-zuora-connector" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/mule-zuora-connector http://www.mulesoft.org/schema/mule/mule-zuora-connector/current/mule-mule-zuora-connector.xsd">
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="ce9bf30e-095b-4a10-93fc-d4242b7fad41" >
+		<salesforce:basic-connection username="xxx" password="xxxxx" securityToken="xxxxxx" />
+	</salesforce:sfdc-config>
+	<mule-zuora-connector:config name="Zuora_Connector_Mule4Connector_Config" doc:name="Zuora Connector Mule4Connector Config" doc:id="cc4e9933-5e7a-496b-818f-aac3652d52d1" >
+		<mule-zuora-connector:oauth2-connection baseUri="https://rest.apisandbox.zuora.com" >
+			<mule-zuora-connector:oauth-client-credentials clientId="xxxxx" clientSecret="xxxxxxxx" />
+		</mule-zuora-connector:oauth2-connection>
+	</mule-zuora-connector:config>
+	<flow name="salesforcezuoraFlow" doc:id="cb5297a4-7dfc-4578-b4eb-e7c4232ba77f" >
+		<salesforce:subscribe-channel-listener streamingChannel="/event/zuora_account__e" doc:name="Subscribe channel listener" doc:id="4569211f-6b92-448a-83b6-fc2241ac9fab" config-ref="Salesforce_Config"/>
+		<logger level="INFO" doc:name="Logger" doc:id="172cc5ef-a169-4ad0-b326-0a9f38bd2274" message="#[payload]"/>
+		<ee:transform doc:name="Transform Message" doc:id="0d834733-22aa-4b1e-9523-a02193f64ab8" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload.data.payload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="Sf" ><![CDATA[%dw 2.0
+output application/json
+---
+sfid:payload.data.payload.sfid__c]]></ee:set-variable>
+				<ee:set-variable variableName="ZuoraData" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"autoPay":false,
+	"billCycleDay":0,
+	"billToContact":{
+		"firstName":payload.data.payload.firstname__c,
+		"lastName":payload.data.payload.lastname__c,
+		"state":payload.data.payload.state__c,
+		"country":payload.data.payload.country__c
+	},
+	"currency":"USD",
+	"name":payload.data.payload.name__c,
+	"SF_Id__c":payload.data.payload.sfid__c
+	
+}
+]]></ee:set-variable>
+				<ee:set-variable variableName="qry" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	queryString:"select accountNumber,name,SF_Id__c from account where SF_Id__c ='" ++ payload.data.payload.sfid__c ++ "'"
+}
+]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<mule-zuora-connector:create-v1-action-query doc:name="Query" doc:id="cb77fb75-d9dc-4ac0-b1d0-b470f061266b" config-ref="Zuora_Connector_Mule4Connector_Config"/>
+		<choice doc:name="Choice" doc:id="7578ab78-7182-4d64-b43e-ee4ba365145a" >
+			<when expression="#[payload.size == 0]">
+				<mule-zuora-connector:create-v1-accounts doc:name="Create account" doc:id="44dc35aa-1d39-4486-a43a-792fb1f856df" config-ref="Zuora_Connector_Mule4Connector_Config">
+					<mule-zuora-connector:content ><![CDATA[#[vars.ZuoraData]]]></mule-zuora-connector:content>
+				</mule-zuora-connector:create-v1-accounts>
+				<ee:transform doc:name="Transform Message" doc:id="c89a13a5-7a1e-47f4-8bfb-da644b80bc78" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+[
+	{
+		zuoraid__c:payload.accountNumber,
+		Id:vars.Sf.sfid
+	}
+]
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<salesforce:update doc:name="Update" doc:id="ad4a42ee-875a-4609-aa73-89921a5dd1a7" config-ref="Salesforce_Config" type="Account"/>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="da1de92a-1c7b-4288-b25b-f5d1ee40139b" message='"already exists"'/>
+			</otherwise>
+		</choice>
+	</flow>
+</mule>
